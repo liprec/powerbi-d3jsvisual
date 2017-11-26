@@ -1,0 +1,110 @@
+@import (less) "node_modules/codemirror/lib/codemirror.css";
+@import (less) "node_modules/codemirror/addon/dialog/dialog.css";
+
+.d3jsframe>iframe {
+    border: none;
+    overflow: hidden;
+}
+
+.d3jslogo {
+    position: absolute;
+    top: 0px;
+    background-color: #fff;
+}
+
+.fading {
+    opacity: 0;
+    animation: fadeinout 5s ease infinite;
+    animation-delay: 2s
+}
+
+@keyframes fadeinout {
+    0%        { opacity:0 }
+    70%       { opacity:1 }
+    100%, 90% { opacity:0 }
+}
+
+.editorHeader {
+    display: block;
+    height: 24px;
+}
+
+.icon {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    stroke-width: 0;
+    stroke: currentColor;
+    fill: currentColor;
+    cursor: pointer;
+    margin: 0 4px;
+    padding: 1px;
+}
+
+.icon>svg {
+    height: 18px;
+    width: 18px;
+    padding: 1px;
+}
+
+.selected {
+    padding: 0px;
+    background-color: #efefef;
+    border: 1px solid silver;
+}
+
+.space {
+    width: 6px;
+}
+
+.space>svg {
+    width: 4px;
+}
+
+.help {
+    float:right;
+    display:flex;
+}
+
+.messageBox {
+    margin-left: 10px;
+    height: 22px;
+    vertical-align: top;
+}
+
+.info {
+    color: inherit;
+}
+
+.warning {
+    color: rgb(242,200,17);
+}
+
+.error {
+    color: #E81123;
+}
+
+[tooltip]:before {
+    content: attr(tooltip);
+    position: absolute;
+    opacity: 0;
+    transition: all 0.15s ease;
+    padding: 1px;
+    color: #333;
+    box-shadow: 2px 2px 1px silver;    
+}
+
+[tooltip]:hover:before {
+    opacity: 1;
+    background: silver;
+    margin-top: -3px;
+    margin-left: 30px;
+}
+
+.help[tooltip]:hover:before {
+    margin-left: -40px;
+}
+
+[tooltip]:not([tooltip-persistent]):before {
+    pointer-events: none;
+}

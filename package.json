@@ -1,0 +1,25 @@
+{
+  "name": "visual",
+  "dependencies": {
+    "codemirror": "^5.32.0",
+    "d3": "^3.5.17",
+    "jquery": "^3.2.1",
+    "powerbi-visuals-utils-dataviewutils": "^1.2.0",
+    "powerbi-visuals-utils-interactivityutils": "^1.0.0",
+    "powerbi-visuals-utils-svgutils": "^1.1.0",
+    "rollup-plugin-buble": "^0.18.0",
+    "uglify-js": "^3.1.10"
+  },
+  "devDependencies": {
+    "@types/codemirror": "^0.0.52",
+    "@types/d3": "3.5.36",
+    "@types/jquery": "2.0.41",
+    "@types/uglify-js": "^2.6.29",
+    "powerbi-visuals-tools": "^1.9.0",
+    "tslint": "5.4.3",
+    "tslint-microsoft-contrib": "^5.0.0"
+  },
+  "scripts": {
+    "postinstall": "pbiviz update 1.7.0 && rollup -c rollup.config.js && node .\\node_modules\\uglify-js\\bin\\uglifyjs --self -o .\\node_modules\\uglify-js\\lib\\uglify-js.js"
+  }
+}
