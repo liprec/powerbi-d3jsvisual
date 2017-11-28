@@ -52,3 +52,4 @@ node_modules
 # Power BI custom visuals
 .tmp
 .api
+dist
