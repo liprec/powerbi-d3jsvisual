@@ -8,8 +8,8 @@
     ],
     "dataViewMappings": [
         {
-            "categorical": {
-                "categories": {
+            "table": {
+                "rows": {
                     "for": {
                         "in": "dataset"
                     },
@@ -17,7 +17,7 @@
                         "top": { "count": 30000 }
                     }
                 }
-            }
+            }    
         }
     ],
     "objects": {

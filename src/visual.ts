@@ -402,7 +402,7 @@ module powerbi.extensibility.visual {
                 d3jsCode += "{" ;
                 for (let c = 0; c < data.dataObjects.length; c++) {
                     let columnName = data.dataObjects[c].columnName.toLowerCase();
-                    let value = data.dataObjects[c].values[v].valueOf() as number;
+                    let value = data.dataObjects[c].values[v];
                     d3jsCode += `${columnName}:'${value}',`;
                 }
                 d3jsCode += "},";
@@ -413,20 +413,25 @@ module powerbi.extensibility.visual {
 
         private convert(dataView: DataView) : D3JSDataObjects {
             if (!dataView ||
-                !dataView.categorical ||
-                !dataView.categorical.categories) {
+                !dataView.table ||
+                !dataView.table.columns) {
                 return {
                     dataObjects: []
                 }
             }
 
-            let categories = dataView.categorical.categories;
+            let columns = dataView.table.columns;
+            let rows = dataView.table.rows;
             let dataObjects = [];
-            for (let i = 0; i < categories.length; i++) {
-                let category = categories[i];
+            for (let c = 0; c < columns.length; c++) {
+                let column = columns[c];
+                let values = [];
+                for (let r = 0; r < rows.length; r++) {                        
+                    values.push(rows[r][c]);
+                }
                 let dataObject: D3JSDataObject = {
-                    columnName: category.source.displayName,
-                    values: category.values
+                    columnName: column.displayName,
+                    values: values
                 }
                 dataObjects.push(dataObject);
             }
