@@ -85,6 +85,8 @@ module powerbi.extensibility.visual {
         private interactivityService: IInteractivityService;
         private viewport: IViewport;
         private data: D3JSDataObjects;
+        private D3jswidth: number;
+        private D3jsheight: number;
         private colorPalette: IColorPalette;
         private editContainer: Selection<any>;
         private d3Container: Selection<any>;
@@ -189,6 +191,7 @@ module powerbi.extensibility.visual {
                 {title: "", class: D3JSVisual.Space.className, icon: this.IconSet.space, selected: false },
                 {title: "JavaScript", class: D3JSVisual.Js.className, icon: this.IconSet.js, selected: true },
                 {title: "Style", class: D3JSVisual.Css.className, icon: this.IconSet.css, selected: false },
+                {title: "PBI object", class: D3JSVisual.Object.className, icon: this.IconSet.object, selected: false },
                 {title: "", class: D3JSVisual.Space.className, icon: this.IconSet.space, selected: false },
                 {title: "Parse", class: D3JSVisual.Parse.className, icon: this.IconSet.parse, selected: false },
                 {title: "Help", class: D3JSVisual.Help.className, icon: this.IconSet.help, selected: false }
@@ -266,9 +269,9 @@ module powerbi.extensibility.visual {
                 // Render mode
                 const d3Icon = [{title: "D3.js logo: (c) Mike Bostock", class: D3JSVisual.D3jsLogo.className, icon: this.IconSet.d3js }]
                 
-                let width = (this.viewport.width - this.settings.margin.left - this.settings.margin.right);
-                let height = (this.viewport.height - this.settings.margin.top - this.settings.margin.bottom);
-                let logoWidth = width > 100 ? 100 : width;
+                this.D3jswidth = (this.viewport.width - this.settings.margin.left - this.settings.margin.right);
+                this.D3jsheight = (this.viewport.height - this.settings.margin.top - this.settings.margin.bottom);
+                let logoWidth = this.D3jswidth > 100 ? 100 : this.D3jswidth;
                 this.d3Container.selectAll(D3JSVisual.D3jsLogo.selectorName).remove();
                 let d3logo = this.d3Container
                     .selectAll(D3JSVisual.D3jsLogo.selectorName)
@@ -278,8 +281,8 @@ module powerbi.extensibility.visual {
                     .append("div")
                     .attr("tooltip", (d) => d.title)
                     .each(function (d) { this.classList.add(d.class); })
-                    .style("top", PixelConverter.toString((height - (logoWidth / 2)) / 2))
-                    .style("left", PixelConverter.toString((width - (logoWidth / 2)) / 2))
+                    .style("top", PixelConverter.toString((this.D3jsheight - (logoWidth / 2)) / 2))
+                    .style("left", PixelConverter.toString((this.D3jswidth - (logoWidth / 2)) / 2))
                     .html((d) => d.icon
                         .replace(/#width/g, logoWidth.toString())
                     );
@@ -288,7 +291,7 @@ module powerbi.extensibility.visual {
                 if (this.settings.general.js!="") {
                     // Animate the D3.js logo
                     d3logo.classed("fading", true);
-                    this.renderD3js(options, height, width);
+                    this.renderD3js(options, this.D3jsheight, this.D3jswidth);
                 }
             }
             this.telemetry.trace(VisualEventType.Trace, this.traceEvents.update);
@@ -383,23 +386,31 @@ module powerbi.extensibility.visual {
         }
 
         private createHeader(data: D3JSDataObjects, height: number, width: number): string {
+            return this.createHeaderBase(data, height, width, true);
+        }
+
+        private createHeaderView(data: D3JSDataObjects, height: number, width: number): string {
+            return this.createHeaderBase(data, height, width, false);
+        }
+
+        private createHeaderBase(data: D3JSDataObjects, height: number, width: number, min: boolean): string {
             let d3jsCode = "var pbi = {";
             // Add visual dimensions to the scripts
-            d3jsCode += 'width:' + width + ",";
-            d3jsCode += 'height:' + height + ",";
-            d3jsCode += 'colors:["'
-                + this.settings.colors.color1 + '","'
-                + this.settings.colors.color2 + '","'
-                + this.settings.colors.color3 + '","'
-                + this.settings.colors.color4 + '","'
-                + this.settings.colors.color5 + '","'
-                + this.settings.colors.color6 + '","'
-                + this.settings.colors.color7 + '","'
-                + this.settings.colors.color8 + '"'
-            + '],';
-            d3jsCode += "dsv:function(callback){data=[";
+            d3jsCode += (min ? '' : '\n\t') + 'width:' + width + ",";
+            d3jsCode += (min ? '' : '\n\t') + 'height:' + height + ",";
+            d3jsCode += (min ? '' : '\n\t') + 'colors:['
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color1 + '",'
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color2 + '",'
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color3 + '",'
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color4 + '",'
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color5 + '",'
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color6 + '",'
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color7 + '",'
+                + (min ? '"' : '\n\t\t"') + this.settings.colors.color8
+                + (min ? '"' : '"\n\t') + '],';
+            d3jsCode += (min ? "" : "\n\t") + "dsv:function(accessor,callback){" + (min ? "" : "\n\t\t") + "data=[";
             for (let v = 0; v < data.dataObjects[0].values.length; v++) {
-                d3jsCode += "{" ;
+                d3jsCode += (min ? "" : "\n\t\t\t") + "{" ;
                 for (let c = 0; c < data.dataObjects.length; c++) {
                     let columnName = data.dataObjects[c].columnName.toLowerCase();
                     let value = data.dataObjects[c].values[v];
@@ -407,7 +418,14 @@ module powerbi.extensibility.visual {
                 }
                 d3jsCode += "},";
             }
-            d3jsCode += '];callback(data);}};';
+            d3jsCode += (min ? "" : "\n\t\t") + '];';
+            d3jsCode += (min ? "" : "\n\t\t") + 'if (arguments.length<2) {';
+            d3jsCode += (min ? "" : "\n\t\t\t") + 'callback=accessor,accessor=null;';
+            d3jsCode += (min ? "" : "\n\t\t") + '} else {';
+            d3jsCode += (min ? "" : "\n\t\t\t") + 'data = data.map(function(d) { return accessor(d) });';
+            d3jsCode += (min ? "" : "\n\t\t") + '}';
+            d3jsCode += (min ? "" : "\n\t\t") + 'callback(data);';
+            d3jsCode += (min ? "" : "\n\t") + '}' + (min ? "" : "\n") + '};';
             return d3jsCode;
         }
 
@@ -543,6 +561,26 @@ module powerbi.extensibility.visual {
                             textarea.text(this.settings.general.css);
                             this.editor.setValue(this.settings.general.css);
                             this.editor.setOption("mode", "css");
+                            this.editor.setOption("readOnly", "false");
+                            this.editor.refresh();
+                        } else {
+                            MessageBox.MessageBox.setMessageBox(this.saveWarning);
+                        }
+                    }
+                });
+            this.editContainer.select(D3JSVisual.Object.selectorName)
+                .on("click", () => {
+                    MessageBox.MessageBox.setMessageBox(this.hideMessageBox);
+                    if (this.parseCode(this.editor, this.open)) {
+                        if (this.isSaved) {
+                            // Switch to Code
+                            this.open = D3JSVisualType.Js;
+                            this.reload = true;
+                            this.switchIcons(D3JSVisualType.Object);
+                            textarea.text(this.createHeaderView(this.data, this.D3jsheight, this.D3jswidth));
+                            this.editor.setValue(this.createHeaderView(this.data, this.D3jsheight, this.D3jswidth));
+                            this.editor.setOption("mode", "javascript");
+                            this.editor.setOption("readOnly", "nocursor");
                             this.editor.refresh();
                         } else {
                             MessageBox.MessageBox.setMessageBox(this.saveWarning);
@@ -571,6 +609,10 @@ module powerbi.extensibility.visual {
                             break;
                         default:
                     }
+                });
+            this.editContainer.select(D3JSVisual.Help.selectorName)
+                .on("click", () => {
+                    this.host.launchUrl(this.settings.general.helpUrl);
                 });
         }
 

@@ -44,6 +44,8 @@ module powerbi.extensibility.visual {
         public d3SVG: string = `<svg class="chart" id="chart"></svg>`
         public d3CSS: string = `<style>#style</style>`
         public d3jsError: string = `<div class="d3jsError">#error</div>`
+
+        public helpUrl: string = `"https://azurebi.jppp.org/power-bi-d3js-visual/"`
     }
 
     export class MarginSettings {
