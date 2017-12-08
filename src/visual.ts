@@ -104,6 +104,7 @@ module powerbi.extensibility.visual {
         private static EditContainer: ClassAndSelector = createClassAndSelector("editContainer");
         private static D3Container: ClassAndSelector = createClassAndSelector("d3Container");
         private static EditorHeader: ClassAndSelector = createClassAndSelector("editorHeader");
+        private static EditorTextArea: ClassAndSelector = createClassAndSelector("editorTextArea");
         private static MessageBox: ClassAndSelector = createClassAndSelector("messageBox");
         private static Icon: ClassAndSelector = createClassAndSelector("icon");
         private static New: ClassAndSelector = createClassAndSelector("new");
@@ -225,7 +226,8 @@ module powerbi.extensibility.visual {
                 .style("display", "none");
 
             let editor = this.editContainer
-                .append("textarea");             
+                .append("textarea")
+                .classed(D3JSVisual.EditorTextArea.className, true); 
             
             this.d3Container = d3.select(this.target)
                 .append("div")
@@ -313,10 +315,8 @@ module powerbi.extensibility.visual {
                     mode = "javascript";
                     break;
             }
-            textarea
-                .each(function (d) {
-                    textareaElement = this; // Convert to HTMLTextAreaElement
-                });
+            textareaElement = $(D3JSVisual.EditorTextArea.selectorName)[0]
+            $('.CodeMirror').remove();
             this.editor = CodeMirror.fromTextArea(textareaElement, {
                 lineNumbers: true,
                 mode: mode
@@ -375,7 +375,10 @@ module powerbi.extensibility.visual {
                 .style("padding-left", PixelConverter.toString(this.settings.margin.left))
             let iHtml = this.settings.general.d3CSS
             iHtml = iHtml.replace("#style", this.settings.general.css);
-            iHtml += this.settings.general.d3SVG
+            let svg = this.settings.general.d3SVG
+                .replace(/#height/g, PixelConverter.toString(height))
+                .replace(/#width/g, PixelConverter.toString(width))
+            iHtml += svg
             $(D3JSVisual.D3jsFrame.selectorName).html(iHtml); // Inject code via jQuery
             try {
                 eval(d3jsCode);
@@ -412,7 +415,7 @@ module powerbi.extensibility.visual {
             for (let v = 0; v < data.dataObjects[0].values.length; v++) {
                 d3jsCode += (min ? "" : "\n\t\t\t") + "{" ;
                 for (let c = 0; c < data.dataObjects.length; c++) {
-                    let columnName = data.dataObjects[c].columnName.toLowerCase();
+                    let columnName = data.dataObjects[c].columnName;
                     let value = data.dataObjects[c].values[v];
                     d3jsCode += `${columnName}:'${value}',`;
                 }
@@ -448,7 +451,7 @@ module powerbi.extensibility.visual {
                     values.push(rows[r][c]);
                 }
                 let dataObject: D3JSDataObject = {
-                    columnName: column.displayName,
+                    columnName: column.displayName.replace(/\s+/g, '').toLowerCase(),
                     values: values
                 }
                 dataObjects.push(dataObject);

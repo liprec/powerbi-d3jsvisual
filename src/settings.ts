@@ -41,11 +41,11 @@ module powerbi.extensibility.visual {
 
         public iFrame: string = `<iframe id="d3js-sandbox" class="d3js-sandbox" width="#width" height="#height" style="width:#widthpx;height:#heightpx;margin-top:#toppx;margin-left:#leftpx" src="data:text/html,#src" sandbox="allow-scripts"></iframe>`
         public d3Document: string = `<html><head><script src='https://d3js.org/d3.v3.min.js'></script><style id='d3js-css'>#style</style><script>window.addEventListener('message', function (e) {var mainWindow=e.source;try {document.getElementById('chart').innerHTML="";eval(e.data);} catch (ex) {console.log('D3js code threw an exception: ' + ex);} mainWindow.postMessage("",e.origin);});</script></head><body style="margin:0px;"><svg class="chart" id="chart"></svg></body></html>`
-        public d3SVG: string = `<svg class="chart" id="chart"></svg>`
+        public d3SVG: string = `<svg class="chart" id="chart" width="#width" height="#height"></svg>`
         public d3CSS: string = `<style>#style</style>`
         public d3jsError: string = `<div class="d3jsError">#error</div>`
 
-        public helpUrl: string = `"https://azurebi.jppp.org/power-bi-d3js-visual/"`
+        public helpUrl: string = `https://azurebi.jppp.org/power-bi-d3js-visual/`
     }
 
     export class MarginSettings {
