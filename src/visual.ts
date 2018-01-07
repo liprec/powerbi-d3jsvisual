@@ -1,21 +1,21 @@
 /*
  *
- * Copyright (c) 2017 Jan Pieter Posthuma / DataScenarios
- * 
+ * Copyright (c) 2018 Jan Pieter Posthuma / DataScenarios
+ *
  * All rights reserved.
- * 
+ *
  * MIT License.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
  *  in the Software without restriction, including without limitation the rights
  *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  *  copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,8 +25,8 @@
  *  THE SOFTWARE.
  */
 module powerbi.extensibility.visual {
-    
-    "use strict";    
+
+    "use strict";
     // untils.interactivity
     import ISelectionHandler = powerbi.extensibility.utils.interactivity.ISelectionHandler;
     import IInteractivityService = powerbi.extensibility.utils.interactivity.IInteractivityService;
@@ -37,7 +37,7 @@ module powerbi.extensibility.visual {
     import PixelConverter = powerbi.extensibility.utils.type.PixelConverter;
     // d3
     import Selection = d3.Selection;
-    
+
     import MessageBoxType = powerbi.extensibility.utils.MessageBox.MessageBoxType;
     import MessageBoxOptions = powerbi.extensibility.utils.MessageBox.MessageBoxOptions;
     import MessageBox = powerbi.extensibility.utils.MessageBox;
@@ -45,7 +45,7 @@ module powerbi.extensibility.visual {
     let visualProperties = {
         d3jsJs: <DataViewObjectPropertyIdentifier>{ objectName: "general", propertyName: "js" },
         d3jsCss: <DataViewObjectPropertyIdentifier>{ objectName: "general", propertyName: "css" },
-    }
+    };
 
     export enum D3JSVisualType {
         Js,
@@ -54,12 +54,12 @@ module powerbi.extensibility.visual {
     }
 
     export interface D3JSDataObjects {
-        dataObjects: D3JSDataObject[]
+        dataObjects: D3JSDataObject[];
     }
 
     export interface D3JSDataObject {
-        columnName : string,
-        values: PrimitiveValue[]
+        columnName: string;
+        values: PrimitiveValue[];
     }
 
     // Types are not updated yet, so manual override
@@ -100,6 +100,7 @@ module powerbi.extensibility.visual {
 
         private saveWarning: MessageBoxOptions;
         private hideMessageBox: MessageBoxOptions;
+        private overwriteWarning: MessageBoxOptions;
 
         private static EditContainer: ClassAndSelector = createClassAndSelector("editContainer");
         private static D3Container: ClassAndSelector = createClassAndSelector("d3Container");
@@ -124,7 +125,7 @@ module powerbi.extensibility.visual {
             init: 'Init method',
             update: 'Update method',
             render: 'Render method'
-        }
+        };
 
         // MDL icons
         private IconSet = {
@@ -173,7 +174,7 @@ module powerbi.extensibility.visual {
                 <path d="M176.765333,242.016 L95.808,242.016 C112.104,231.952 126.192,218.666667 137.250667,203.088 L176.765333,242.016 L176.765333,242.016 Z M122.312,188.370667 L83.152,149.781333 C72.3333333,173.032 48.7573333,189.202667 21.4666667,189.202667 L0,189.202667 L0,242.410667 L21.4666667,242.410667 C63.4773333,242.410667 100.557333,220.922667 122.312,188.370667 L122.312,188.370667 L122.312,188.370667 Z" fill="url(#linearGradient-6)"></path>
             </g>
         </svg>`
-        }
+        };
 
         constructor(options: VisualConstructorOptions) {
             this.target = options.element;
@@ -196,24 +197,24 @@ module powerbi.extensibility.visual {
                 {title: "", class: D3JSVisual.Space.className, icon: this.IconSet.space, selected: false },
                 {title: "Parse", class: D3JSVisual.Parse.className, icon: this.IconSet.parse, selected: false },
                 {title: "Help", class: D3JSVisual.Help.className, icon: this.IconSet.help, selected: false }
-            ]
+            ];
 
             this.viewport = options.viewport;
 
             this.editContainer = d3.select(this.target)
                 .append("div")
                 .classed(D3JSVisual.EditContainer.className, true);
-            
+
             let editorHeader = this.editContainer
                 .append("div")
                 .classed(D3JSVisual.EditorHeader.className, true);
-            
+
             editorHeader.selectAll(D3JSVisual.Icon.selectorName)
                 .data(editorIcons)
                 .enter()
                 .append("div")
                 .classed(D3JSVisual.Icon.className, true)
-                .classed("selected", function (d) { return d.selected })
+                .classed("selected", function (d) { return d.selected; })
                 .attr("tooltip", (d) => d.title)
                 .each(function (d) { this.classList.add(d.class); })
                 .on("mouseover", function (d) { d3.select(this).style("color", "#a6a6a6"); })
@@ -227,15 +228,15 @@ module powerbi.extensibility.visual {
 
             let editor = this.editContainer
                 .append("textarea")
-                .classed(D3JSVisual.EditorTextArea.className, true); 
-            
+                .classed(D3JSVisual.EditorTextArea.className, true);
+
             this.d3Container = d3.select(this.target)
                 .append("div")
                 .classed(D3JSVisual.D3Container.className, true);
 
             this.d3jsFrame = this.d3Container
                 .append("div")
-                .classed(D3JSVisual.D3jsFrame.className, true)
+                .classed(D3JSVisual.D3jsFrame.className, true);
 
             this.open = D3JSVisualType.Js; // Open Javascript code by defaults
 
@@ -246,8 +247,18 @@ module powerbi.extensibility.visual {
             this.saveWarning = {
                 type: MessageBoxType.Warning,
                 base: this.messageBox,
-                text: "Warning: File is not saved. Press save button."
-            }
+                text: "Warning: File is not saved. Save now?",
+                label1: "Yes",
+                label2: "No",
+                label3: "Cancel"
+            };
+            this.overwriteWarning = {
+                type: MessageBoxType.Warning,
+                base: this.messageBox,
+                text: "Warning: Remove current content?",
+                label1: "Yes",
+                label2: "No"
+            };
             this.telemetry.trace(VisualEventType.Trace, this.traceEvents.init);
         }
 
@@ -258,19 +269,19 @@ module powerbi.extensibility.visual {
                 this.init(options);
             }
             this.viewport = options.viewport;
-            
-            this.editContainer.style("display", options.editMode===EditMode.Advanced ? "inline" : "none");
-            this.d3Container.style("display", options.editMode===EditMode.Advanced ? "none" : "inline");
+
+            this.editContainer.style("display", options.editMode === EditMode.Advanced ? "inline" : "none");
+            this.d3Container.style("display", options.editMode === EditMode.Advanced ? "none" : "inline");
             let settings = this.settings = D3JSVisual.parseSettings(options && options.dataViews && options.dataViews[0]);
             this.parseColors();
-            
-            if (options.editMode===EditMode.Advanced) {
+
+            if (options.editMode === EditMode.Advanced) {
                 // Edit mode
-                this.renderEdit(this);
+                this.renderEdit();
             } else {
                 // Render mode
-                const d3Icon = [{title: "D3.js logo: (c) Mike Bostock", class: D3JSVisual.D3jsLogo.className, icon: this.IconSet.d3js }]
-                
+                const d3Icon = [{title: "D3.js logo: (c) Mike Bostock", class: D3JSVisual.D3jsLogo.className, icon: this.IconSet.d3js }];
+
                 this.D3jswidth = (this.viewport.width - this.settings.margin.left - this.settings.margin.right);
                 this.D3jsheight = (this.viewport.height - this.settings.margin.top - this.settings.margin.bottom);
                 let logoWidth = this.D3jswidth > 100 ? 100 : this.D3jswidth;
@@ -290,7 +301,7 @@ module powerbi.extensibility.visual {
                     );
                 d3logo.exit().remove();
                 // Check if we have custom code and render the custom d3js
-                if (this.settings.general.js!="") {
+                if (this.settings.general.js !== "") {
                     // Animate the D3.js logo
                     d3logo.classed("fading", true);
                     this.renderD3js(options, this.D3jsheight, this.D3jswidth);
@@ -299,29 +310,19 @@ module powerbi.extensibility.visual {
             this.telemetry.trace(VisualEventType.Trace, this.traceEvents.update);
         }
 
-        private renderEdit(__this) {
+        private renderEdit() {
             let viewport = this.viewport;
             let textarea = this.editContainer.select("textarea");
             let textareaElement = undefined;
-            let mode;
-            switch (this.open) {
-                case D3JSVisualType.Css:
-                    textarea.text(this.settings.general.css);
-                    mode = "css";
-                    break;  
-                case D3JSVisualType.Js:
-                default:
-                    textarea.text(this.settings.general.js);
-                    mode = "javascript";
-                    break;
-            }
-            textareaElement = $(D3JSVisual.EditorTextArea.selectorName)[0]
+            this.open = this.getSelectedIcons();
+            textareaElement = $(D3JSVisual.EditorTextArea.selectorName)[0];
             $('.CodeMirror').remove();
             this.editor = CodeMirror.fromTextArea(textareaElement, {
-                lineNumbers: true,
-                mode: mode
+                lineNumbers: true
             });
-            this.editor.setSize(viewport.width, viewport.height- 24);
+            this.switchContext(this, textarea, this.open);
+            let __this = this;
+            this.editor.setSize(viewport.width, viewport.height - 24);
             this.editor.on("change", function() {
                 // use __this as 'this' context is altered by CodeMirror
                 MessageBox.MessageBox.setMessageBox(__this.hideMessageBox);
@@ -340,47 +341,24 @@ module powerbi.extensibility.visual {
             this.telemetry.trace(VisualEventType.Trace, this.traceEvents.render);
             let __this = this;
             // Create data object
-            let data = this.data = this.convert(options.dataViews[0]); 
+            let data = this.data = this.convert(options.dataViews[0]);
             let d3jsCode = this.createHeader(data, height, width);
             d3jsCode += this.settings.general.js;
 
-            // Designed sandbox mode only working in Edge :-(
-            // Create IFrame and html document woth injected code/css
-            //let d3Document = this.settings.general.d3Document;
-            //d3Document = d3Document.replace("#style", this.settings.general.css);
-            //d3Document = d3Document.replace("#script", d3jsCode);
-            //d3Document = d3Document.replace(/"/g, "&quot;");
-            //let iFrame = this.settings.general.iFrame;
-            //iFrame = iFrame.replace(/#width/g, width.toString());
-            //iFrame = iFrame.replace(/#height/g, height.toString());
-            //iFrame = iFrame.replace(/#top/g, this.settings.margin.top.toString());
-            //iFrame = iFrame.replace(/#left/g, this.settings.margin.left.toString());
-            //iFrame = iFrame.replace("#src", d3Document);
-            //$(D3JSVisual.D3jsFrame.selectorName).html(iFrame);
-            // Inject javascript code into iFrame
-            // $(document).ready(() => {
-            //     let frame = $('#d3js-sandbox')[0] as HTMLIFrameElement
-            //     frame.contentWindow.postMessage(d3jsCode, '*');
-            //     window.addEventListener('message', function (e) {
-            //         //if (e.origin === "data://") {
-            //              let logo = $(D3JSVisual.D3jsLogo.selectorName).remove();
-            //         //    __this.telemetry.trace(VisualEventType.Trace, __this.traceEvents.render);
-            //         //}
-            //     });
-            // });
             this.d3jsFrame
                 .style("heigth", PixelConverter.toString(height))
                 .style("width", PixelConverter.toString(width))
                 .style("padding-top", PixelConverter.toString(this.settings.margin.top))
-                .style("padding-left", PixelConverter.toString(this.settings.margin.left))
-            let iHtml = this.settings.general.d3CSS
+                .style("padding-left", PixelConverter.toString(this.settings.margin.left));
+            let iHtml = this.settings.general.d3CSS;
             iHtml = iHtml.replace("#style", this.settings.general.css);
             let svg = this.settings.general.d3SVG
                 .replace(/#height/g, PixelConverter.toString(height))
-                .replace(/#width/g, PixelConverter.toString(width))
-            iHtml += svg
+                .replace(/#width/g, PixelConverter.toString(width));
+            iHtml += svg;
             $(D3JSVisual.D3jsFrame.selectorName).html(iHtml); // Inject code via jQuery
             try {
+                // tslint:disable-next-line:no-eval
                 eval(d3jsCode);
             } catch (ex) {
                 console.log(`Error during D3js code evauation: ${ex.description}`);
@@ -412,14 +390,16 @@ module powerbi.extensibility.visual {
                 + (min ? '"' : '\n\t\t"') + this.settings.colors.color8
                 + (min ? '"' : '"\n\t') + '],';
             d3jsCode += (min ? "" : "\n\t") + "dsv:function(accessor,callback){" + (min ? "" : "\n\t\t") + "data=[";
-            for (let v = 0; v < data.dataObjects[0].values.length; v++) {
-                d3jsCode += (min ? "" : "\n\t\t\t") + "{" ;
-                for (let c = 0; c < data.dataObjects.length; c++) {
-                    let columnName = data.dataObjects[c].columnName;
-                    let value = data.dataObjects[c].values[v];
-                    d3jsCode += `${columnName}:'${value}',`;
+            if (data && data.dataObjects && (data.dataObjects.length > 0)) {
+                for (let v = 0; v < data.dataObjects[0].values.length; v++) {
+                    d3jsCode += (min ? "" : "\n\t\t\t") + "{" ;
+                    for (let c = 0; c < data.dataObjects.length; c++) {
+                        let columnName = data.dataObjects[c].columnName;
+                        let value = data.dataObjects[c].values[v];
+                        d3jsCode += `${columnName}:'${value}',`;
+                    }
+                    d3jsCode += "},";
                 }
-                d3jsCode += "},";
             }
             d3jsCode += (min ? "" : "\n\t\t") + '];';
             d3jsCode += (min ? "" : "\n\t\t") + 'if (arguments.length<2) {';
@@ -432,13 +412,13 @@ module powerbi.extensibility.visual {
             return d3jsCode;
         }
 
-        private convert(dataView: DataView) : D3JSDataObjects {
+        private convert(dataView: DataView): D3JSDataObjects {
             if (!dataView ||
                 !dataView.table ||
                 !dataView.table.columns) {
                 return {
                     dataObjects: []
-                }
+                };
             }
 
             let columns = dataView.table.columns;
@@ -447,19 +427,19 @@ module powerbi.extensibility.visual {
             for (let c = 0; c < columns.length; c++) {
                 let column = columns[c];
                 let values = [];
-                for (let r = 0; r < rows.length; r++) {                        
+                for (let r = 0; r < rows.length; r++) {
                     values.push(rows[r][c]);
                 }
                 let dataObject: D3JSDataObject = {
                     columnName: column.displayName.replace(/\s+/g, '').toLowerCase(),
                     values: values
-                }
+                };
                 dataObjects.push(dataObject);
             }
-            
+
             return {
                 dataObjects: dataObjects
-            }
+            };
         }
 
         private parseColors() {
@@ -520,11 +500,14 @@ module powerbi.extensibility.visual {
         private registerEvents(textarea: Selection<any>) {
             this.editContainer.select(D3JSVisual.New.selectorName)
                 .on("click", () => {
-                    this.reload = true;
-                    this.persist("", D3JSVisualType.Js);
-                    this.persist("", D3JSVisualType.Css);
-                    this.editor.setValue("");
-                    this.editor.refresh();
+                    let __this = this;
+                    this.overwriteWarning.callback1 = function() { // Yes function
+                        __this.reload = true;
+                        __this.persist("", __this.open);
+                        __this.editor.setValue("");
+                        __this.editor.refresh();
+                    };
+                    MessageBox.MessageBox.setMessageBox(this.overwriteWarning);
                 });
             this.editContainer.select(D3JSVisual.Save.selectorName)
                 .on("click", () => {
@@ -538,16 +521,22 @@ module powerbi.extensibility.visual {
                 .on("click", () => {
                     MessageBox.MessageBox.setMessageBox(this.hideMessageBox);
                     if (this.parseCode(this.editor, this.open)) {
+                        let __this = this;
                         if (this.isSaved) {
                             // Switch to Code
-                            this.open = D3JSVisualType.Js;
-                            this.reload = true;
-                            this.switchIcons(D3JSVisualType.Js);
-                            textarea.text(this.settings.general.js);
-                            this.editor.setValue(this.settings.general.js);
-                            this.editor.setOption("mode", "javascript");
-                            this.editor.refresh();
+                            __this.switchContext(__this, textarea, D3JSVisualType.Js);
                         } else {
+                            this.saveWarning.callback1 = function() { // Yes function
+                                // Save content
+                                __this.isSaved = true;
+                                __this.persist(__this.editor.getValue(), __this.open);
+                                // Switch to Code
+                                __this.switchContext(__this, textarea, D3JSVisualType.Js);
+                            };
+                            this.saveWarning.callback2 = function() { // No function
+                                // Switch to Code
+                                __this.switchContext(__this, textarea, D3JSVisualType.Js);
+                            };
                             MessageBox.MessageBox.setMessageBox(this.saveWarning);
                         }
                     }
@@ -556,17 +545,22 @@ module powerbi.extensibility.visual {
                 .on("click", () => {
                     MessageBox.MessageBox.setMessageBox(this.hideMessageBox);
                     if (this.parseCode(this.editor, this.open)) {
-                        if (this.isSaved) {                        
+                        let __this = this;
+                        if (this.isSaved) {
                             // Switch to CSS
-                            this.open = D3JSVisualType.Css;
-                            this.reload = true;
-                            this.switchIcons(D3JSVisualType.Css);
-                            textarea.text(this.settings.general.css);
-                            this.editor.setValue(this.settings.general.css);
-                            this.editor.setOption("mode", "css");
-                            this.editor.setOption("readOnly", "false");
-                            this.editor.refresh();
+                            __this.switchContext(__this, textarea, D3JSVisualType.Css);
                         } else {
+                            this.saveWarning.callback1 = function() { // Yes function
+                                // Save content
+                                __this.isSaved = true;
+                                __this.persist(__this.editor.getValue(), __this.open);
+                                // Switch to CSS
+                                __this.switchContext(__this, textarea, D3JSVisualType.Css);
+                            };
+                            this.saveWarning.callback2 = function() { // No function
+                                // Switch to CSS
+                                __this.switchContext(__this, textarea, D3JSVisualType.Css);
+                            };
                             MessageBox.MessageBox.setMessageBox(this.saveWarning);
                         }
                     }
@@ -575,17 +569,22 @@ module powerbi.extensibility.visual {
                 .on("click", () => {
                     MessageBox.MessageBox.setMessageBox(this.hideMessageBox);
                     if (this.parseCode(this.editor, this.open)) {
+                        let __this = this;
                         if (this.isSaved) {
-                            // Switch to Code
-                            this.open = D3JSVisualType.Js;
-                            this.reload = true;
-                            this.switchIcons(D3JSVisualType.Object);
-                            textarea.text(this.createHeaderView(this.data, this.D3jsheight, this.D3jswidth));
-                            this.editor.setValue(this.createHeaderView(this.data, this.D3jsheight, this.D3jswidth));
-                            this.editor.setOption("mode", "javascript");
-                            this.editor.setOption("readOnly", "nocursor");
-                            this.editor.refresh();
+                            // Switch to Object code
+                            __this.switchContext(__this, textarea, D3JSVisualType.Object);
                         } else {
+                            this.saveWarning.callback1 = function() { // Yes function
+                                // Save content
+                                __this.isSaved = true;
+                                __this.persist(__this.editor.getValue(), __this.open);
+                                // Switch to Object code
+                                __this.switchContext(__this, textarea, D3JSVisualType.Object);
+                            };
+                            this.saveWarning.callback2 = function() { // No function
+                                // Switch to Object code
+                                __this.switchContext(__this, textarea, D3JSVisualType.Object);
+                            };
                             MessageBox.MessageBox.setMessageBox(this.saveWarning);
                         }
                     }
@@ -619,13 +618,43 @@ module powerbi.extensibility.visual {
                 });
         }
 
+        private switchContext(__this: this, textarea: Selection<any>, type: D3JSVisualType) {
+            let code, mode, readOnly, openType = type;
+            switch (type) {
+                case D3JSVisualType.Js:
+                    mode = "javascript";
+                    readOnly = false;
+                    code = __this.settings.general.js;
+                    break;
+                case D3JSVisualType.Css:
+                    mode = "css";
+                    readOnly = false;
+                    code = __this.settings.general.css;
+                    break;
+                case D3JSVisualType.Object:
+                    mode = "javascript";
+                    readOnly = "nocursor";
+                    openType = D3JSVisualType.Js;
+                    code = __this.createHeaderView(__this.data, __this.D3jsheight, __this.D3jswidth);
+                    break;
+            }
+            __this.open = openType;
+            __this.reload = true;
+            __this.switchIcons(type);
+            textarea.text(code);
+            __this.editor.setValue(code);
+            __this.editor.setOption("mode", mode);
+            __this.editor.setOption("readOnly", readOnly);
+            __this.editor.refresh();
+        }
+
         private parseCode(editor: CodeMirror.EditorFromTextArea, type: D3JSVisualType): boolean {
             let selectLength = 1;
             let minifyOptions = {
                 compress: false,
                 mangle: false,
             };
-            if (type!==D3JSVisualType.Js) { return true }
+            if (type !== D3JSVisualType.Js) { return true; }
             let result = UglifyJS.minify(editor.getValue(), minifyOptions) as CompileOutput;
             let search = editor.getDoc().getSearchCursor('d3.select("svg")');
             if (search.findNext()) {
@@ -657,25 +686,37 @@ module powerbi.extensibility.visual {
 
         private switchIcons(type: D3JSVisualType) {
             this.editContainer.select(D3JSVisual.Js.selectorName)
-                .classed("selected", type===D3JSVisualType.Js);
+                .classed("selected", type === D3JSVisualType.Js);
             this.editContainer.select(D3JSVisual.Css.selectorName)
-                .classed("selected", type===D3JSVisualType.Css);
+                .classed("selected", type === D3JSVisualType.Css);
             this.editContainer.select(D3JSVisual.Object.selectorName)
-                .classed("selected", type===D3JSVisualType.Object);
+                .classed("selected", type === D3JSVisualType.Object);
+        }
+
+        private getSelectedIcons(): D3JSVisualType {
+            if (this.editContainer.select(D3JSVisual.Js.selectorName).classed("selected")) {
+                return D3JSVisualType.Js;
+            }
+            if (this.editContainer.select(D3JSVisual.Css.selectorName).classed("selected")) {
+                return D3JSVisualType.Css;
+            }
+            if (this.editContainer.select(D3JSVisual.Object.selectorName).classed("selected")) {
+                return D3JSVisualType.Object;
+            }
         }
 
         private static parseSettings(dataView: DataView): Settings {
             return Settings.parse(dataView) as Settings;
         }
 
-        /** 
-         * This function gets called for each of the objects defined in the capabilities files and allows you to select which of the 
+        /**
+         * This function gets called for each of the objects defined in the capabilities files and allows you to select which of the
          * objects and properties you want to expose to the users in the property pane.
-         * 
+         *
          */
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstance[] | VisualObjectInstanceEnumerationObject {
             let settings: Settings = (this.settings || Settings.getDefault()) as Settings;
-            
+
 
             const instanceEnumeration: VisualObjectInstanceEnumeration = Settings.enumerateObjectInstances(
                 settings,
