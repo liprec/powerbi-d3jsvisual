@@ -3,7 +3,7 @@
   "dependencies": {
     "codemirror": "^5.32.0",
     "d3": "^3.5.17",
-    "jquery": "^3.2.1",
+    "jquery": "^3.5.0",
     "powerbi-visuals-utils-dataviewutils": "^1.2.0",
     "powerbi-visuals-utils-interactivityutils": "^1.0.0",
     "powerbi-visuals-utils-svgutils": "^1.1.0",
